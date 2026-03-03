@@ -4,10 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+hsv = { git = "https://github.com/pdx-cs-rust-embedded/hsv.git" }
 cortex-m-rt = "0.7"
 microbit-v2 = "0.16"
 panic-rtt-target = "0.2"
 rtt-target = "0.6"
+critical-section-lock-mut = "0.1.2"
+embedded-hal = "1.0.0"
 
 [dependencies.cortex-m]
 version = "0.7"
