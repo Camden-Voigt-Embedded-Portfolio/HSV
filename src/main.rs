@@ -64,7 +64,7 @@ static GPIOTE: LockMut<Gpiote> = LockMut::new();
 static A_BUTTON_STATE: AtomicBool = AtomicBool::new(false);
 static B_BUTTON_STATE: AtomicBool = AtomicBool::new(false);
 
-static TIMER_MUT: LockMut<RgbDisplay> = LockMut::new();
+static RGB_MUT: LockMut<RgbDisplay> = LockMut::new();
 
 const DEBOUNCE_TIME: u32 = 100 * 1_000_000 / 1000;
 #[interrupt]
@@ -87,7 +87,7 @@ fn GPIOTE() {
 
 #[interrupt]
 fn TIMER0() {
-    TIMER_MUT.with_lock(|rgb_display| {
+    RGB_MUT.with_lock(|rgb_display| {
         rgb_display.step();
     });
 }
@@ -147,7 +147,7 @@ fn main() -> ! {
     // Setup timer for PWM
     timer0.enable_interrupt();
     let rgb_display = RgbDisplay::new(rgb_pins, timer0);
-    TIMER_MUT.init(rgb_display);
+    RGB_MUT.init(rgb_display);
 
     // Setup State
     let mut mode = Mode::Hue;
@@ -159,7 +159,7 @@ fn main() -> ! {
 
     let value = saadc.read_channel(&mut pin_2).unwrap();
     hsv = update_hsv(hsv, value, mode);
-    TIMER_MUT.with_lock(|rgb_display| {
+    RGB_MUT.with_lock(|rgb_display| {
         rgb_display.set(&hsv);
         rgb_display.step();
     });
@@ -179,9 +179,9 @@ fn main() -> ! {
         // Handle HSV update and conversion
         let value = saadc.read_channel(&mut pin_2).unwrap();
         hsv = update_hsv(hsv, value, mode);
-        TIMER_MUT.with_lock(|rgb_display| rgb_display.set(&hsv));
+        RGB_MUT.with_lock(|rgb_display| rgb_display.set(&hsv));
 
         // Display blocking
-        display.show(&mut timer1, mode.get_display(), FRAME_MS);
+        display.show(&mut timer1, mode.get_display(), 100);
     }
 }

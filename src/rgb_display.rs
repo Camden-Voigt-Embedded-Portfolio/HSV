@@ -44,12 +44,14 @@ impl RgbDisplay {
         let rgb = hsv.to_rgb();
         rprintln!("hsv - {}, {}, {}", hsv.h, hsv.s, hsv.v);
         rprintln!("rgb - {}, {}, {}", rgb.r, rgb.g, rgb.b);
-        let r_steps = (rgb.r * 100.0) as u32;
-        let g_steps = (rgb.g * 100.0) as u32;
-        let b_steps = (rgb.b * 100.0) as u32;
+        let r_steps = (rgb.r * 100.0).clamp(0.0, 99.0) as u32;
+        let g_steps = (rgb.g * 100.0).clamp(0.0, 99.0) as u32;
+        let b_steps = (rgb.b * 100.0).clamp(0.0, 99.0) as u32;
         self.next_schedule = Some([r_steps, g_steps, b_steps]);
     }
 
+    /// Return the next scheduled tick to stop at
+    /// If Nothing scheduled return something greater than 100
     fn get_next_ticks(&self) -> u32 {
         let mut min = 500;
         for v in self.schedule {
@@ -58,20 +60,26 @@ impl RgbDisplay {
             }
         }
 
+        if min == 500 {
+            return 100;
+        }
+
         min
     }
 
     /// Take the next frame update step. Called at startup
     /// and then from the timer interrupt handler.
     pub fn step(&mut self) {
+        // reset if start of new frame
         if self.tick == 0 {
-            for pin in &mut self.rgb_pins {
-                pin.set_low();
-            }
-            if let Some(sched) = self.next_schedule {
-                self.schedule = sched;
+            for (i, pin) in self.rgb_pins.iter_mut().enumerate() {
+                if self.schedule[i] != 0 {
+                    pin.set_low();
+                }
             }
         }
+
+        // Turn component off if we are at its scheduled time
         if self.tick == self.schedule[0] {
             self.rgb_pins[0].set_high();
         }
@@ -81,20 +89,26 @@ impl RgbDisplay {
         if self.tick == self.schedule[2] {
             self.rgb_pins[2].set_high();
         }
-        self.timer0.reset_event();
+
+        // Find the next delay
         let next_ticks = self.get_next_ticks();
-        self.tick = if next_ticks > 100 { 0 } else { next_ticks };
+        self.tick = if next_ticks == 100 {
+            if let Some(sched) = self.next_schedule {
+                self.schedule = sched;
+            }
+            0
+        } else {
+            next_ticks
+        };
         let mut cycles = (next_ticks - self.tick) * 100;
         rprintln!("{:?}", self.schedule);
-        rprintln!(
-            "self.tick - {}, next_ticks - {}, cycles - {}",
-            self.tick,
-            next_ticks,
-            cycles
-        );
+
+        // Set new timer
+        // Bad thing when you send 0 so send 1 instead
         if cycles == 0 {
             cycles = 1;
         }
+        self.timer0.reset_event();
         self.timer0.start(cycles);
     }
 }
