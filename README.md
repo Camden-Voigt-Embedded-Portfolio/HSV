@@ -7,6 +7,7 @@ This is a simple embedded program written in rust for the microbit v2. It allows
 ## Building and Running
 
 With probe-rs installed and a microbit v2 connected run to flash onto the microbit.
+
 `cargo run --release`
 
 ## How the project went
