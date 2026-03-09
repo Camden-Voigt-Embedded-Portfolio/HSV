@@ -25,9 +25,7 @@ use microbit::{
     },
 };
 use panic_rtt_target as _;
-use rtt_target::{rprintln, rtt_init_print};
-
-const FRAME_MS: u32 = 10;
+use rtt_target::rtt_init_print;
 
 fn update_hsv(hsv: Hsv, new_val: i16, mode: Mode) -> Hsv {
     let mut update_val = new_val;

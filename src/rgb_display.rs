@@ -1,7 +1,5 @@
-use core::cmp::max;
-
-use embedded_hal::digital::OutputPin;
 // Outline Copied from Assignment HSV description
+use embedded_hal::digital::OutputPin;
 use hsv::Hsv;
 use microbit::{
     hal::{
@@ -10,9 +8,6 @@ use microbit::{
     },
     pac,
 };
-use rtt_target::rprintln;
-
-const FRAME_TICKS: u32 = 100;
 
 pub struct RgbDisplay {
     // What tick of the frame are we currently on?
@@ -42,8 +37,6 @@ impl RgbDisplay {
     /// Set up a new schedule, to be started next frame.
     pub fn set(&mut self, hsv: &Hsv) {
         let rgb = hsv.to_rgb();
-        rprintln!("hsv - {}, {}, {}", hsv.h, hsv.s, hsv.v);
-        rprintln!("rgb - {}, {}, {}", rgb.r, rgb.g, rgb.b);
         let r_steps = (rgb.r * 100.0).clamp(0.0, 99.0) as u32;
         let g_steps = (rgb.g * 100.0).clamp(0.0, 99.0) as u32;
         let b_steps = (rgb.b * 100.0).clamp(0.0, 99.0) as u32;
@@ -53,15 +46,11 @@ impl RgbDisplay {
     /// Return the next scheduled tick to stop at
     /// If Nothing scheduled return something greater than 100
     fn get_next_ticks(&self) -> u32 {
-        let mut min = 500;
+        let mut min = 100;
         for v in self.schedule {
             if v > self.tick && v < min {
                 min = v;
             }
-        }
-
-        if min == 500 {
-            return 100;
         }
 
         min
@@ -92,7 +81,7 @@ impl RgbDisplay {
 
         // Find the next delay
         let next_ticks = self.get_next_ticks();
-        self.tick = if next_ticks == 100 {
+        let ts = if next_ticks == 100 {
             if let Some(sched) = self.next_schedule {
                 self.schedule = sched;
             }
@@ -100,8 +89,8 @@ impl RgbDisplay {
         } else {
             next_ticks
         };
-        let mut cycles = (next_ticks - self.tick) * 100;
-        rprintln!("{:?}", self.schedule);
+        let mut cycles = ((next_ticks - self.tick) * 100) / 2;
+        self.tick = ts;
 
         // Set new timer
         // Bad thing when you send 0 so send 1 instead
