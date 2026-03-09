@@ -37,9 +37,9 @@ impl RgbDisplay {
     /// Set up a new schedule, to be started next frame.
     pub fn set(&mut self, hsv: &Hsv) {
         let rgb = hsv.to_rgb();
-        let r_steps = (rgb.r * 100.0).clamp(0.0, 99.0) as u32;
-        let g_steps = (rgb.g * 100.0).clamp(0.0, 99.0) as u32;
-        let b_steps = (rgb.b * 100.0).clamp(0.0, 99.0) as u32;
+        let r_steps = (rgb.r * 100.0) as u32;
+        let g_steps = (rgb.g * 100.0) as u32;
+        let b_steps = (rgb.b * 100.0) as u32;
         self.next_schedule = Some([r_steps, g_steps, b_steps]);
     }
 
